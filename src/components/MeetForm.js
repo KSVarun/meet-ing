@@ -41,16 +41,16 @@ class MeetForm extends React.Component {
   };
 
   render() {
-    console.log(this.state);
+    // console.log(this.state);
     return (
       <div>
         <Formik
-          enableReinitialize
           initialValues={{
-            meeting_name: this.state.meeting_name,
+            meeting_name: "",
             start_date: this.state.start_date,
-            end_date: this.state.end_date,
-            attendees: this.state.attendees_name,
+            end_date: "",
+            email: "",
+            attendees: [],
           }}
           onSubmit={(values) => {
             console.log(values);
@@ -89,31 +89,22 @@ class MeetForm extends React.Component {
               </div>
               <div className="field">
                 <label>Attendees</label>
-                <Field
-                  autoFocus
-                  name="meeting_name"
-                  type="email"
-                  onChange={this.handleAttendeeChange}
-                  placeholder="Email"
-                  value={this.state.value}
-                ></Field>
-                <span onClick={this.handleAdd}>Add</span>
-                {/* <div className="ui action input">
+                <div className="ui action input">
                   <input
-                    type="text"
-                    onChange={this.handleAddAttendee}
+                    name="meeting_name"
+                    type="email"
+                    onChange={(email) => setFieldValue("email", email)}
                     placeholder="Email"
-                    value={this.state.value}
                   />
-                  <span onClick={this.handleAdd}>Add</span>
-                </div> */}
+                  <button type="button">Add</button>
+                </div>
               </div>
               <div>
                 {this.state.attendees_name.map((item, index) => {
                   return (
-                    <div>
-                      <div key={item}>{item}</div>
-                      <span key={index} onClick={() => this.handleCancle(item)}>
+                    <div key={item}>
+                      <div>{item}</div>
+                      <span onClick={() => this.handleCancle(item)}>
                         cancle
                       </span>
                     </div>
