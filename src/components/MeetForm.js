@@ -1,60 +1,28 @@
 import React from "react";
-import { Formik, Field, Form } from "formik";
+import { Formik, Field, Form, FieldArray } from "formik";
 import DatePicker from "react-datepicker";
 import moment from "moment";
 
 import "react-datepicker/dist/react-datepicker.css";
 
 class MeetForm extends React.Component {
-  state = {
-    value: "",
-    attendees_name: [],
-    meeting_name: "",
-    start_date: new Date(),
-    end_date: "",
-  };
-  handleAdd = () => {
-    this.setState((state) => {
-      const attendees_name = [...state.attendees_name, state.value];
-
-      return {
-        value: "",
-        attendees_name: attendees_name,
-      };
-    });
-  };
-
-  handleAttendeeChange = (event) =>
-    this.setState({ value: event.target.value });
-
-  handleCancle = (remove_item) => {
-    this.setState((state) => {
-      const attendees_name = state.attendees_name.filter(
-        (item) => item !== remove_item
-      );
-
-      return {
-        value: "",
-        attendees_name: attendees_name,
-      };
-    });
-  };
-
   render() {
     // console.log(this.state);
     return (
       <div>
         <Formik
+          enableReinitialize
           initialValues={{
             meeting_name: "",
-            start_date: this.state.start_date,
+            start_date: "",
             end_date: "",
-            email: "",
             attendees: [],
+            summary: "",
           }}
-          onSubmit={(values) => {
+          onSubmit={(values, { resetForm }) => {
             console.log(values);
             console.log(moment(values.start_date).format());
+            resetForm();
           }}
         >
           {({ values, setFieldValue }) => (
@@ -62,6 +30,10 @@ class MeetForm extends React.Component {
               <div className="field">
                 <label>Meeting Name</label>
                 <Field autoFocus name="meeting_name" type="text"></Field>
+              </div>
+              <div className="field">
+                <label>Summary</label>
+                <Field autoFocus name="summary" type="text"></Field>
               </div>
               <div className="field">
                 <label>Start Time</label>
@@ -89,27 +61,44 @@ class MeetForm extends React.Component {
               </div>
               <div className="field">
                 <label>Attendees</label>
-                <div className="ui action input">
-                  <input
-                    name="meeting_name"
-                    type="email"
-                    onChange={(email) => setFieldValue("email", email)}
-                    placeholder="Email"
-                  />
-                  <button type="button">Add</button>
-                </div>
-              </div>
-              <div>
-                {this.state.attendees_name.map((item, index) => {
-                  return (
-                    <div key={item}>
-                      <div>{item}</div>
-                      <span onClick={() => this.handleCancle(item)}>
-                        cancle
-                      </span>
+                <FieldArray
+                  name="attendees"
+                  render={({ insert, remove, push }) => (
+                    <div>
+                      {values.attendees.length > 0 &&
+                        values.attendees.map((attendee, index) => (
+                          <div className="row" key={index}>
+                            <div className="col">
+                              <label htmlFor={`attendees.${index}.email`}>
+                                Email
+                              </label>
+                              <Field
+                                name={`attendees.${index}.email`}
+                                placeholder="Email"
+                                type="text"
+                              />
+                            </div>
+                            <div className="col">
+                              <button
+                                type="button"
+                                className="secondary"
+                                onClick={() => remove(index)}
+                              >
+                                X
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      <button
+                        type="button"
+                        className="secondary"
+                        onClick={() => push({ email: "" })}
+                      >
+                        Add Attendee
+                      </button>
                     </div>
-                  );
-                })}
+                  )}
+                />
               </div>
               <div>
                 <button className="ui primary button" type="submit">
