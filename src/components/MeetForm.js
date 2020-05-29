@@ -6,10 +6,40 @@ import moment from "moment";
 import "react-datepicker/dist/react-datepicker.css";
 
 class MeetForm extends React.Component {
+  state = {
+    meet_url: "",
+  };
+  execute = (data) => {
+    return window.gapi.client.calendar.events
+      .insert({
+        calendarId: "primary",
+        resource: {
+          end: {
+            dateTime: moment(data.end_date).format(),
+            timeZone: "Asia/Kolkata",
+          },
+          start: {
+            timeZone: "Asia/Kolkata",
+            dateTime: moment(data.start_date).format(),
+          },
+          summary: data.summary,
+          description: data.meeting_name,
+          attendees: data.attendees,
+        },
+      })
+      .then(
+        (response) => {
+          this.setState({ meet_url: response.result.hangoutLink });
+        },
+        (err) => {
+          console.error("Execute error", err);
+        }
+      );
+  };
   render() {
-    // console.log(this.state);
     return (
       <div>
+        <h4 className="ui horizontal divider header">SCHEDULE MEET</h4>
         <Formik
           enableReinitialize
           initialValues={{
@@ -19,10 +49,8 @@ class MeetForm extends React.Component {
             attendees: [],
             summary: "",
           }}
-          onSubmit={(values, { resetForm }) => {
-            console.log(values);
-            console.log(moment(values.start_date).format());
-            resetForm();
+          onSubmit={(data, { resetForm }) => {
+            this.execute(data).then(resetForm);
           }}
         >
           {({ values, setFieldValue }) => (
@@ -33,7 +61,7 @@ class MeetForm extends React.Component {
               </div>
               <div className="field">
                 <label>Summary</label>
-                <Field autoFocus name="summary" type="text"></Field>
+                <Field name="summary" type="text"></Field>
               </div>
               <div className="field">
                 <label>Start Time</label>
@@ -69,20 +97,25 @@ class MeetForm extends React.Component {
                         values.attendees.map((attendee, index) => (
                           <div className="row" key={index}>
                             <div className="col">
-                              <label htmlFor={`attendees.${index}.email`}>
+                              <label
+                                htmlFor={`attendees.${index}.email`}
+                                style={{ marginBottom: "5px" }}
+                              >
                                 Email
                               </label>
                               <Field
                                 name={`attendees.${index}.email`}
                                 placeholder="Email"
                                 type="text"
+                                style={{ marginBottom: "5px" }}
                               />
                             </div>
                             <div className="col">
                               <button
                                 type="button"
-                                className="secondary"
+                                className="mini ui button"
                                 onClick={() => remove(index)}
+                                style={{ marginBottom: "5px" }}
                               >
                                 X
                               </button>
@@ -91,7 +124,7 @@ class MeetForm extends React.Component {
                         ))}
                       <button
                         type="button"
-                        className="secondary"
+                        className="ui button"
                         onClick={() => push({ email: "" })}
                       >
                         Add Attendee
@@ -100,15 +133,27 @@ class MeetForm extends React.Component {
                   )}
                 />
               </div>
-              <div>
-                <button className="ui primary button" type="submit">
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <button
+                  className="ui primary button"
+                  type="submit"
+                  disabled={!this.props.loginStatus}
+                >
                   CREATE MEET
                 </button>
               </div>
-              <pre>{JSON.stringify(values)}</pre>
+              {/* <pre>{JSON.stringify(values)}</pre> */}
             </Form>
           )}
         </Formik>
+        <h4 className="ui horizontal divider header">MEET URL</h4>
+        <a>{this.state.meet_url}</a>
       </div>
     );
   }

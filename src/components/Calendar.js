@@ -1,21 +1,35 @@
 import React from "react";
 
 class Calendar extends React.Component {
+  state = {
+    expiry: "",
+    button: "",
+    class_name: "ui button red",
+    logged_in: false,
+  };
+
+  handleUpdateButton = () => {
+    if (
+      this.state.expiry === "" ||
+      this.state.expiry < new Date().setSeconds(0, 0)
+    ) {
+      this.setState({ button: "LOGIN" });
+    } else {
+      this.setState({ button: "LOGGED_IN", logged_in: true });
+      this.props.onUpdateLogin(this.state.logged_in);
+    }
+  };
   componentDidMount() {
     window.gapi.load("client:auth2", () => {
       window.gapi.auth2.init({
         client_id: process.env.REACT_APP_CLIENT_ID,
       });
     });
+
+    this.handleUpdateButton();
   }
 
-  /**
-   * Sample JavaScript code for calendar.events.insert
-   * See instructions for running APIs Explorer code samples locally:
-   * https://developers.google.com/explorer-help/guides/code_samples#javascript
-   */
-
-  authenticate() {
+  authenticate = () => {
     return window.gapi.auth2
       .getAuthInstance()
       .signIn({
@@ -23,76 +37,49 @@ class Calendar extends React.Component {
           "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events",
       })
       .then(
-        function () {
-          console.log("Sign-in successful");
+        (response) => {
+          this.setState({
+            expiry: response.wc.expires_at,
+            button: "LOGGED_IN",
+            class_name: "ui button green",
+            logged_in: true,
+          });
+
+          this.handleUpdateButton();
         },
-        function (err) {
+        (err) => {
           console.error("Error signing in", err);
         }
       );
-  }
+  };
   loadClient() {
     window.gapi.client.setApiKey(process.env.REACT_APP_API_KEY);
     return window.gapi.client
       .load("https://content.googleapis.com/discovery/v1/apis/calendar/v3/rest")
       .then(
-        function () {
+        () => {
           console.log("GAPI client loaded for API");
         },
-        function (err) {
+        (err) => {
           console.error("Error loading GAPI client for API", err);
-        }
-      );
-  }
-  // Make sure the client is loaded and sign-in is complete before calling this method.
-  execute() {
-    return window.gapi.client.calendar.events
-      .insert({
-        calendarId: "primary",
-        resource: {
-          end: {
-            dateTime: "2020-05-28T18:00:00+05:30",
-            timeZone: "Asia/Kolkata",
-          },
-          start: {
-            timeZone: "Asia/Kolkata",
-            dateTime: "2020-05-28T17:00:00+05:30",
-          },
-          summary: "test-summary-update",
-          description: "test-description-update",
-          attendees: [
-            {
-              email: "ksvarun002@gmail.com",
-            },
-            {
-              email: "varunks001@gmail.com",
-            },
-          ],
-        },
-      })
-      .then(
-        function (response) {
-          // Handle the results here (response.result has the parsed body).
-          console.log("Response", response);
-        },
-        function (err) {
-          console.error("Execute error", err);
         }
       );
   }
 
   render() {
     return (
-      <div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          marginRight: "auto",
+        }}
+      >
         <button
-          className="ui button"
+          className={this.state.class_name}
           onClick={() => this.authenticate().then(this.loadClient)}
         >
-          authorize and load
-        </button>
-
-        <button className="ui button" onClick={() => this.execute()}>
-          execute
+          {this.state.button}
         </button>
       </div>
     );
