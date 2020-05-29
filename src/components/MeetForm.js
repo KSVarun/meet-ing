@@ -9,6 +9,8 @@ const MeetForm = ({ loginStatus }) => {
   const [url, setUrl] = useState("");
 
   const execute = (data) => {
+    debugger;
+
     return window.gapi.client.calendar.events
       .insert({
         calendarId: "primary",
