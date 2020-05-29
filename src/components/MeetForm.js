@@ -146,12 +146,13 @@ const MeetForm = ({ loginStatus }) => {
                 CREATE MEET
               </button>
             </div>
-            {/* <pre>{JSON.stringify(values)}</pre> */}
           </Form>
         )}
       </Formik>
       <h4 className="ui horizontal divider header">MEET URL</h4>
-      <p>{url}</p>
+      <a href={url} target="_blank" rel="noopener noreferrer">
+        {url}
+      </a>
     </div>
   );
 };
