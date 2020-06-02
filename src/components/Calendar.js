@@ -9,7 +9,7 @@ class Calendar extends React.Component {
 
   handleUpdateButton = (isSignedIn) => {
     if (!isSignedIn) {
-      this.setState({ button: "LOGIN" });
+      this.setState({ button: "LOGIN", class_name: "ui red button" });
     } else {
       this.setState({
         button: "LOGGED_IN",
@@ -25,23 +25,34 @@ class Calendar extends React.Component {
         .init({
           client_id: process.env.REACT_APP_CLIENT_ID,
         })
-        .then(() => {
-          window.gapi.client.setApiKey(process.env.REACT_APP_API_KEY);
-          window.gapi.client
-            .load(
-              "https://content.googleapis.com/discovery/v1/apis/calendar/v3/rest"
-            )
-            .then(
-              () => {
-                console.log("GAPI client loaded for API");
-              },
-              (err) => {
-                console.error("Error loading GAPI client for API", err);
-              }
-            );
-          var GoogleAuth = window.gapi.auth2.getAuthInstance();
-          this.handleUpdateButton(GoogleAuth.isSignedIn.get());
-        });
+        .then(
+          () => {
+            window.gapi.client.setApiKey(process.env.REACT_APP_API_KEY);
+            window.gapi.client
+              .load(
+                "https://content.googleapis.com/discovery/v1/apis/calendar/v3/rest"
+              )
+              .then(
+                () => {
+                  console.log("GAPI client loaded for API");
+                },
+                (err) => {
+                  console.error("Error loading GAPI client for API", err);
+                }
+              );
+            //fetch google auth
+            var GoogleAuth = window.gapi.auth2.getAuthInstance();
+            this.handleUpdateButton(GoogleAuth.isSignedIn.get());
+            //fetch google user
+            var GoogleUser = GoogleAuth.currentUser.get();
+            console.log(GoogleUser.reloadAuthResponse());
+          },
+          (err) => {
+            console.log("Error logging in ");
+            var GoogleAuth = window.gapi.auth2.getAuthInstance();
+            this.handleUpdateButton(GoogleAuth.isSignedIn.get());
+          }
+        );
     });
   };
 
@@ -56,6 +67,7 @@ class Calendar extends React.Component {
         () => {
           var GoogleAuth = window.gapi.auth2.getAuthInstance();
           this.handleUpdateButton(GoogleAuth);
+          this.load();
         },
         (err) => {
           console.error("Error signing in", err);
@@ -87,7 +99,7 @@ class Calendar extends React.Component {
       >
         <button
           className={this.state.class_name}
-          onClick={() => this.authenticate().then(this.load)}
+          onClick={() => this.authenticate()}
         >
           {this.state.button}
         </button>

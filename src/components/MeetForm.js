@@ -9,8 +9,6 @@ const MeetForm = ({ loginStatus }) => {
   const [url, setUrl] = useState("");
 
   const execute = (data) => {
-    debugger;
-
     return window.gapi.client.calendar.events
       .insert({
         calendarId: "primary",
@@ -26,6 +24,11 @@ const MeetForm = ({ loginStatus }) => {
           summary: data.summary,
           description: data.meeting_name,
           attendees: data.attendees,
+          //for diabling email notification and remainders
+          sendUpdates: "none",
+          reminders: {
+            useDefault: false,
+          },
         },
       })
       .then(
