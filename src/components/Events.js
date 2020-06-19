@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import moment from "moment";
 
 import { deleteEvent } from "../api/Schedule";
 
@@ -29,9 +30,17 @@ const Events = () => {
       var events = JSON.parse(localStorage.getItem("events"));
       return (
         <div>
-          <Link to="/schedule" className="ui primary button">
-            CREATE MEET
-          </Link>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+            }}
+          >
+            <Link to="/schedule" className="ui primary button">
+              CREATE MEET
+            </Link>
+          </div>
 
           <h4 className="ui horizontal divider header">EVENTS</h4>
           <div className={parentLoadDiv}>
@@ -62,8 +71,12 @@ const Events = () => {
                     ></i>
                     <div className="header">{e.summary}</div>
                     <div className="description">{e.description}</div>
-                    <div className="description">{e.startDateTime}</div>
-                    <div className="description">{e.endDateTime}</div>
+                    <div className="description">
+                      {moment(e.startDateObj).format("MMMM Do YYYY, h:mm A")}
+                    </div>
+                    <div className="description">
+                      {moment(e.endDateObj).format("MMMM Do YYYY, h:mm A")}
+                    </div>
                     <a
                       href={e.meetURL}
                       target="_blank"
@@ -82,17 +95,18 @@ const Events = () => {
     } else {
       return (
         <div>
-          <Link
+          <div
             style={{
               display: "flex",
-              justifyContent: "center",
+              justifyContent: "flex-end",
               alignItems: "center",
             }}
-            to="/schedule"
-            className="ui primary button"
           >
-            CREATE MEET
-          </Link>
+            <Link to="/schedule" className="ui primary button">
+              CREATE MEET
+            </Link>
+          </div>
+
           <h4 className="ui horizontal divider header">EVENTS</h4>
           <div
             style={{

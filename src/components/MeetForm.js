@@ -4,6 +4,7 @@ import DatePicker from "react-datepicker";
 import moment from "moment";
 import uuid from "uuid/v4";
 import { Link, useHistory } from "react-router-dom";
+import Select from "react-select";
 
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -20,13 +21,25 @@ const MeetForm = (props) => {
   const [buttonMsg, setButtonMsg] = useState("SCHEDULE");
 
   const attendees = [
-    { name: "Alex", email: "alex@gmail.com" },
-    { name: "Jarvis", email: "jarvis@gmail.com" },
-    { name: "Siri", email: "siri@gmail.com" },
-    { name: "Cortana", email: "cortana@gmail.com" },
-    { name: "Alexa", email: "alexa@gmail.com" },
-    { name: "Eric", email: "eric@gmail.com" },
-    { name: "Elliot", email: "elliot@gmail.com" },
+    { label: "Alex", value: "alex@gmail.com" },
+    { label: "Jarvis", value: "jarvis@gmail.com" },
+    { label: "Siri", value: "siri@gmail.com" },
+    { label: "Cortana", value: "cortana@gmail.com" },
+    { label: "Alexa", value: "alexa@gmail.com" },
+    { label: "Eric", value: "eric@gmail.com" },
+    { label: "Elliot", value: "elliot@gmail.com" },
+  ];
+
+  const program = [
+    { label: "Group 1", value: "Group 1" },
+    { label: "Group 2", value: "Group 2" },
+    { label: "Group 3", value: "Group 3" },
+  ];
+
+  const batch = [
+    { label: "A", value: "A" },
+    { label: "B", value: "B" },
+    { label: "C", value: "C" },
   ];
 
   useEffect(() => {
@@ -37,7 +50,7 @@ const MeetForm = (props) => {
     }
   }, [props.location.state]);
 
-  const handleLS = (reseponse, key) => {
+  const handleLS = (reseponse, key, data) => {
     setButtonClassName("ui primary button");
 
     if (update.length === 0) {
@@ -47,18 +60,14 @@ const MeetForm = (props) => {
       // Add new data to localStorage Array
       existing.push({
         key: key,
+        program: data.program,
+        batch: data.batch,
         summary: schedule.summary,
         description: schedule.description,
-        startDateTime: moment(schedule.startDateTime).format(
-          "MMMM Do YYYY, h:mm A"
-        ),
-        endDateTime: moment(schedule.endDateTime).format(
-          "MMMM Do YYYY, h:mm A"
-        ),
-        attendees: schedule.attendees,
+        attendees: data.attendees,
         eventId: reseponse.data.eventId,
-        startDateObj: schedule.startDateTime,
-        endDateObj: schedule.endDateTime,
+        startDateObj: data.start_date,
+        endDateObj: data.end_date,
         meetURL: reseponse.data.url,
       });
 
@@ -71,18 +80,14 @@ const MeetForm = (props) => {
       );
       updatedEvents.push({
         key: key,
+        program: data.program,
+        batch: data.batch,
         summary: schedule.summary,
         description: schedule.description,
-        startDateTime: moment(schedule.startDateTime).format(
-          "MMMM Do YYYY, h:mm A"
-        ),
-        endDateTime: moment(schedule.endDateTime).format(
-          "MMMM Do YYYY, h:mm A"
-        ),
-        attendees: schedule.attendees,
+        attendees: data.attendees,
         eventId: reseponse.data.eventId,
-        startDateObj: schedule.startDateTime,
-        endDateObj: schedule.endDateTime,
+        startDateObj: data.start_date,
+        endDateObj: data.end_date,
         meetURL: reseponse.data.url,
       });
       localStorage.setItem("events", JSON.stringify(updatedEvents));
@@ -93,9 +98,9 @@ const MeetForm = (props) => {
     setButtonClassName("ui primary loading button");
 
     if (update.length === 0) {
-      var updatedSummary = String(data.program).concat(
+      var updatedSummary = String(data.program.value).concat(
         " - ",
-        String(data.batch),
+        String(data.batch.value),
         " - ",
         String(data.summary)
       );
@@ -105,7 +110,7 @@ const MeetForm = (props) => {
         description: data.meeting_name,
         startDateTime: moment(data.start_date).format(),
         endDateTime: moment(data.end_date).format(),
-        attendees: data.attendees,
+        attendees: data.attendees.map((a) => a.value),
       };
 
       return await addEvent(schedule);
@@ -123,76 +128,81 @@ const MeetForm = (props) => {
 
   return (
     <div>
-      <Link
+      <div
         style={{
           display: "flex",
-          justifyContent: "center",
+          justifyContent: "flex-end",
           alignItems: "center",
         }}
-        to="/"
-        className="ui primary button"
       >
-        EVENTS
-      </Link>
+        <Link to="/" className="ui primary button">
+          EVENTS
+        </Link>
+      </div>
       <h4 className="ui horizontal divider header">{buttonMsg} MEET</h4>
       <Formik
         enableReinitialize
         initialValues={{
-          program: "",
-          batch: "",
+          program: update.length > 0 ? props.location.state.program : "",
+          batch: update.length > 0 ? props.location.state.batch : "",
           meeting_name: update.length > 0 ? props.location.state.summary : "",
-          start_date: "",
-          end_date: "",
-          attendees: [],
+          start_date:
+            update.length > 0
+              ? new Date(props.location.state.startDateObj)
+              : "",
+          end_date:
+            update.length > 0 ? new Date(props.location.state.endDateObj) : "",
+          attendees: update.length > 0 ? props.location.state.attendees : "",
           summary: update.length > 0 ? props.location.state.description : "",
         }}
         onSubmit={(data, { resetForm }) => {
           handleSubmit(data)
             .then((reseponse) => {
-              handleLS(reseponse, uuid());
+              handleLS(reseponse, uuid(), data);
             })
             .then(() => {
               history.push("/");
             })
-            .catch((err) => console.log(err));
-
-          resetForm();
+            .catch((err) => {
+              setButtonClassName("ui primary button");
+              console.log(err);
+            });
         }}
       >
-        {({ values, setFieldValue, handleChange }) => (
+        {({ values, setFieldValue, handleChange, setFieldTouched }) => (
           <Form className="ui form">
             <div className="field">
               <label>Program</label>
-              <select
-                className="selectpicker"
+              <Select
+                autoFocus
                 name="program"
-                title="Select Program"
-                onChange={handleChange}
-                disabled={disabled}
-              >
-                <option>Grade 1</option>
-                <option>Grade 2</option>
-                <option>Grade 3</option>
-              </select>
+                options={program}
+                className="basic-single"
+                classNamePrefix="select"
+                onChange={(value) => {
+                  setFieldValue("program", value);
+                }}
+                value={values.program}
+                isDisabled={disabled}
+              />
             </div>
             <div className="field">
               <label>Batch</label>
-              <select
-                className="selectpicker"
+              <Select
                 name="batch"
-                title="Select Batch"
-                onChange={handleChange}
-                disabled={disabled}
-              >
-                <option>A</option>
-                <option>B</option>
-                <option>C</option>
-              </select>
+                options={batch}
+                className="basic-single"
+                classNamePrefix="select"
+                onChange={(value) => {
+                  setFieldValue("batch", value);
+                }}
+                value={values.batch}
+                isDisabled={disabled}
+              />
             </div>
             <div className="field">
               <label>Meeting Name</label>
               <Field
-                autoFocus
                 name="meeting_name"
                 type="text"
                 disabled={disabled}
@@ -214,6 +224,7 @@ const MeetForm = (props) => {
                 onChange={(date) => {
                   setFieldValue("start_date", date);
                 }}
+                value={values.start_date}
               />
             </div>
             <div className="field">
@@ -228,31 +239,24 @@ const MeetForm = (props) => {
                 onChange={(date) => {
                   setFieldValue("end_date", date);
                 }}
+                value={values.end_date}
               />
             </div>
             <div className="field">
               <label>Attendees</label>
-              <select
-                className="selectpicker"
-                multiple
+              <Select
+                isMulti
                 name="attendees"
-                data-live-search="true"
-                title="Select Attendees"
-                data-dropup-auto="false"
-                data-actions-box="true"
-                data-size="3"
-                data-selected-text-format="count > 3"
-                onChange={handleChange}
-                disabled={disabled}
-              >
-                {attendees.map((attendee) => {
-                  return (
-                    <option key={attendee.email} value={attendee.email}>
-                      {attendee.name}
-                    </option>
-                  );
-                })}
-              </select>
+                options={attendees}
+                className="basic-multi-select"
+                classNamePrefix="select"
+                onChange={(value) => {
+                  setFieldValue("attendees", value);
+                }}
+                closeMenuOnSelect={false}
+                value={values.attendees}
+                isDisabled={disabled}
+              />
             </div>
             <div
               style={{
