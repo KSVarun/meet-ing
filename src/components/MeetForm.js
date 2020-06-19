@@ -1,70 +1,206 @@
-import React, { useState } from "react";
-import { Formik, Field, Form, FieldArray } from "formik";
+import React, { useState, useEffect } from "react";
+import { Formik, Field, Form } from "formik";
 import DatePicker from "react-datepicker";
 import moment from "moment";
+import uuid from "uuid/v4";
+import { Link, useHistory } from "react-router-dom";
 
 import "react-datepicker/dist/react-datepicker.css";
 
-const MeetForm = ({ loginStatus }) => {
-  const [url, setUrl] = useState("");
+import { addEvent, updateEvent } from "../api/Schedule";
 
-  const execute = (data) => {
-    return window.gapi.client.calendar.events
-      .insert({
-        calendarId: "primary",
-        resource: {
-          end: {
-            dateTime: moment(data.end_date).format(),
-            timeZone: "Asia/Kolkata",
-          },
-          start: {
-            timeZone: "Asia/Kolkata",
-            dateTime: moment(data.start_date).format(),
-          },
-          summary: data.summary,
-          description: data.meeting_name,
-          attendees: data.attendees,
-          //for diabling email notification and remainders
-          sendUpdates: "none",
-          reminders: {
-            useDefault: false,
-          },
-        },
-      })
-      .then(
-        (response) => {
-          setUrl(response.result.hangoutLink);
-        },
-        (err) => {
-          console.error("Execute error", err);
-        }
+const MeetForm = (props) => {
+  var schedule = {};
+
+  const history = useHistory();
+
+  const [buttonClassName, setButtonClassName] = useState("ui primary button");
+  const [update, setUpdate] = useState("");
+  const [disabled, setDisabled] = useState(false);
+  const [buttonMsg, setButtonMsg] = useState("SCHEDULE");
+
+  const attendees = [
+    { name: "Alex", email: "alex@gmail.com" },
+    { name: "Jarvis", email: "jarvis@gmail.com" },
+    { name: "Siri", email: "siri@gmail.com" },
+    { name: "Cortana", email: "cortana@gmail.com" },
+    { name: "Alexa", email: "alexa@gmail.com" },
+    { name: "Eric", email: "eric@gmail.com" },
+    { name: "Elliot", email: "elliot@gmail.com" },
+  ];
+
+  useEffect(() => {
+    if (props.location.state) {
+      setUpdate(props.location.state.eventId);
+      setDisabled(true);
+      setButtonMsg("UPDATE SCHEDULE");
+    }
+  }, [props.location.state]);
+
+  const handleLS = (reseponse, key) => {
+    setButtonClassName("ui primary button");
+
+    if (update.length === 0) {
+      var existing = localStorage.getItem("events");
+      existing = existing ? JSON.parse(existing) : [];
+
+      // Add new data to localStorage Array
+      existing.push({
+        key: key,
+        summary: schedule.summary,
+        description: schedule.description,
+        startDateTime: moment(schedule.startDateTime).format(
+          "MMMM Do YYYY, h:mm A"
+        ),
+        endDateTime: moment(schedule.endDateTime).format(
+          "MMMM Do YYYY, h:mm A"
+        ),
+        attendees: schedule.attendees,
+        eventId: reseponse.data.eventId,
+        startDateObj: schedule.startDateTime,
+        endDateObj: schedule.endDateTime,
+        meetURL: reseponse.data.url,
+      });
+
+      localStorage.setItem("events", JSON.stringify(existing));
+    } else {
+      var events = JSON.parse(localStorage.getItem("events"));
+      localStorage.clear();
+      var updatedEvents = events.filter(
+        (event) => event.eventId !== props.location.state.eventId
       );
+      updatedEvents.push({
+        key: key,
+        summary: schedule.summary,
+        description: schedule.description,
+        startDateTime: moment(schedule.startDateTime).format(
+          "MMMM Do YYYY, h:mm A"
+        ),
+        endDateTime: moment(schedule.endDateTime).format(
+          "MMMM Do YYYY, h:mm A"
+        ),
+        attendees: schedule.attendees,
+        eventId: reseponse.data.eventId,
+        startDateObj: schedule.startDateTime,
+        endDateObj: schedule.endDateTime,
+        meetURL: reseponse.data.url,
+      });
+      localStorage.setItem("events", JSON.stringify(updatedEvents));
+    }
   };
+
+  const handleSubmit = async (data) => {
+    setButtonClassName("ui primary loading button");
+
+    if (update.length === 0) {
+      var updatedSummary = String(data.program).concat(
+        " - ",
+        String(data.batch),
+        " - ",
+        String(data.summary)
+      );
+
+      schedule = {
+        summary: updatedSummary,
+        description: data.meeting_name,
+        startDateTime: moment(data.start_date).format(),
+        endDateTime: moment(data.end_date).format(),
+        attendees: data.attendees,
+      };
+
+      return await addEvent(schedule);
+    } else {
+      schedule = {
+        summary: props.location.state.summary,
+        description: props.location.state.description,
+        startDateTime: moment(data.start_date).format(),
+        endDateTime: moment(data.end_date).format(),
+        attendees: props.location.state.attendees,
+      };
+      return await updateEvent(props.location.state.eventId, schedule);
+    }
+  };
+
   return (
     <div>
-      <h4 className="ui horizontal divider header">SCHEDULE MEET</h4>
+      <Link
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+        to="/"
+        className="ui primary button"
+      >
+        EVENTS
+      </Link>
+      <h4 className="ui horizontal divider header">{buttonMsg} MEET</h4>
       <Formik
         enableReinitialize
         initialValues={{
-          meeting_name: "",
+          program: "",
+          batch: "",
+          meeting_name: update.length > 0 ? props.location.state.summary : "",
           start_date: "",
           end_date: "",
           attendees: [],
-          summary: "",
+          summary: update.length > 0 ? props.location.state.description : "",
         }}
         onSubmit={(data, { resetForm }) => {
-          execute(data).then(resetForm);
+          handleSubmit(data)
+            .then((reseponse) => {
+              handleLS(reseponse, uuid());
+            })
+            .then(() => {
+              history.push("/");
+            })
+            .catch((err) => console.log(err));
+
+          resetForm();
         }}
       >
-        {({ values, setFieldValue }) => (
+        {({ values, setFieldValue, handleChange }) => (
           <Form className="ui form">
             <div className="field">
+              <label>Program</label>
+              <select
+                className="selectpicker"
+                name="program"
+                title="Select Program"
+                onChange={handleChange}
+                disabled={disabled}
+              >
+                <option>Grade 1</option>
+                <option>Grade 2</option>
+                <option>Grade 3</option>
+              </select>
+            </div>
+            <div className="field">
+              <label>Batch</label>
+              <select
+                className="selectpicker"
+                name="batch"
+                title="Select Batch"
+                onChange={handleChange}
+                disabled={disabled}
+              >
+                <option>A</option>
+                <option>B</option>
+                <option>C</option>
+              </select>
+            </div>
+            <div className="field">
               <label>Meeting Name</label>
-              <Field autoFocus name="meeting_name" type="text"></Field>
+              <Field
+                autoFocus
+                name="meeting_name"
+                type="text"
+                disabled={disabled}
+              ></Field>
             </div>
             <div className="field">
               <label>Summary</label>
-              <Field name="summary" type="text"></Field>
+              <Field name="summary" type="text" disabled={disabled}></Field>
             </div>
             <div className="field">
               <label>Start Time</label>
@@ -75,7 +211,9 @@ const MeetForm = ({ loginStatus }) => {
                 timeIntervals={60}
                 timeCaption="time"
                 dateFormat="yyyy-MM-dd, HH:mm"
-                onChange={(date) => setFieldValue("start_date", date)}
+                onChange={(date) => {
+                  setFieldValue("start_date", date);
+                }}
               />
             </div>
             <div className="field">
@@ -87,54 +225,34 @@ const MeetForm = ({ loginStatus }) => {
                 timeIntervals={60}
                 timeCaption="time"
                 dateFormat="yyyy-MM-dd, HH:mm"
-                onChange={(date) => setFieldValue("end_date", date)}
+                onChange={(date) => {
+                  setFieldValue("end_date", date);
+                }}
               />
             </div>
             <div className="field">
               <label>Attendees</label>
-              <FieldArray
+              <select
+                className="selectpicker"
+                multiple
                 name="attendees"
-                render={({ insert, remove, push }) => (
-                  <div>
-                    {values.attendees.length > 0 &&
-                      values.attendees.map((attendee, index) => (
-                        <div className="row" key={index}>
-                          <div className="col">
-                            <label
-                              htmlFor={`attendees.${index}.email`}
-                              style={{ marginBottom: "5px" }}
-                            >
-                              Email
-                            </label>
-                            <Field
-                              name={`attendees.${index}.email`}
-                              placeholder="Email"
-                              type="text"
-                              style={{ marginBottom: "5px" }}
-                            />
-                          </div>
-                          <div className="col">
-                            <button
-                              type="button"
-                              className="mini ui button"
-                              onClick={() => remove(index)}
-                              style={{ marginBottom: "5px" }}
-                            >
-                              X
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    <button
-                      type="button"
-                      className="ui button"
-                      onClick={() => push({ email: "" })}
-                    >
-                      Add Attendee
-                    </button>
-                  </div>
-                )}
-              />
+                data-live-search="true"
+                title="Select Attendees"
+                data-dropup-auto="false"
+                data-actions-box="true"
+                data-size="3"
+                data-selected-text-format="count > 3"
+                onChange={handleChange}
+                disabled={disabled}
+              >
+                {attendees.map((attendee) => {
+                  return (
+                    <option key={attendee.email} value={attendee.email}>
+                      {attendee.name}
+                    </option>
+                  );
+                })}
+              </select>
             </div>
             <div
               style={{
@@ -143,21 +261,13 @@ const MeetForm = ({ loginStatus }) => {
                 alignItems: "center",
               }}
             >
-              <button
-                className="ui primary button"
-                type="submit"
-                disabled={!loginStatus}
-              >
-                CREATE MEET
+              <button className={buttonClassName} type="submit">
+                {buttonMsg}
               </button>
             </div>
           </Form>
         )}
       </Formik>
-      <h4 className="ui horizontal divider header">MEET URL</h4>
-      <a href={url} target="_blank" rel="noopener noreferrer">
-        {url}
-      </a>
     </div>
   );
 };

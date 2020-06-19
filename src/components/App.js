@@ -1,25 +1,22 @@
-import React, { useState } from "react";
+import React from "react";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 
-import Calendar from "./Calendar";
 import MeetForm from "./MeetForm";
+import Events from "./Events";
 
-const App = () => {
-  const [logged, setLogged] = useState(false);
-
-  const updateLogin = (status) => {
-    setLogged(status);
-  };
-
-  return (
-    <div className="ui container" style={{ margin: "10px" }}>
-      <div>
-        <Calendar onUpdateLogin={updateLogin} />
+class App extends React.Component {
+  render() {
+    return (
+      <div className="ui container" style={{ margin: "10px" }}>
+        <Router>
+          <Switch>
+            <Route path="/schedule" component={MeetForm} />
+            <Route path="/" component={Events} />
+          </Switch>
+        </Router>
       </div>
-      <div>
-        <MeetForm loginStatus={logged} />
-      </div>
-    </div>
-  );
-};
+    );
+  }
+}
 
 export default App;
