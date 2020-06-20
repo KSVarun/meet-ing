@@ -158,7 +158,7 @@ const MeetForm = (props) => {
       </div>
       <h4 className="ui horizontal divider header">{buttonMsg} MEET</h4>
       <Formik
-        validateOnChange={true}
+        validateOnBlur={true}
         enableReinitialize
         initialValues={{
           program: update.length > 0 ? props.location.state.program : "",
@@ -175,6 +175,7 @@ const MeetForm = (props) => {
         }}
         validationSchema={validationSchema}
         onSubmit={(data) => {
+          console.log(data);
           handleSubmit(data)
             .then((reseponse) => {
               handleLS(reseponse, uuid(), data);
@@ -311,6 +312,7 @@ const MeetForm = (props) => {
           </Form>
         )}
       </Formik>
+
       <Snackbar open={open} autoHideDuration={3000} onClose={handleClose}>
         <Alert severity="error">
           Some thing happened! Please check the form and retry
