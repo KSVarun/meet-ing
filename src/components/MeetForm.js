@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Formik, Field, Form } from "formik";
+import { Formik, Form } from "formik";
 import DatePicker from "react-datepicker";
 import moment from "moment";
 import uuid from "uuid/v4";
 import { Link, useHistory } from "react-router-dom";
 import Select from "react-select";
+import * as yup from "yup";
+import { TextField, Snackbar } from "@material-ui/core";
+import { Alert } from "@material-ui/lab";
 
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -19,6 +22,7 @@ const MeetForm = (props) => {
   const [update, setUpdate] = useState("");
   const [disabled, setDisabled] = useState(false);
   const [buttonMsg, setButtonMsg] = useState("SCHEDULE");
+  const [open, setOpen] = useState(false);
 
   const attendees = [
     { label: "Alex", value: "alex@gmail.com" },
@@ -126,6 +130,19 @@ const MeetForm = (props) => {
     }
   };
 
+  const handleClose = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setOpen(false);
+  };
+
+  const validationSchema = yup.object({
+    meeting_name: yup.string().required().max(20),
+    summary: yup.string().required().max(20),
+  });
+
   return (
     <div>
       <div
@@ -141,6 +158,7 @@ const MeetForm = (props) => {
       </div>
       <h4 className="ui horizontal divider header">{buttonMsg} MEET</h4>
       <Formik
+        validateOnChange={true}
         enableReinitialize
         initialValues={{
           program: update.length > 0 ? props.location.state.program : "",
@@ -155,7 +173,8 @@ const MeetForm = (props) => {
           attendees: update.length > 0 ? props.location.state.attendees : "",
           summary: update.length > 0 ? props.location.state.description : "",
         }}
-        onSubmit={(data, { resetForm }) => {
+        validationSchema={validationSchema}
+        onSubmit={(data) => {
           handleSubmit(data)
             .then((reseponse) => {
               handleLS(reseponse, uuid(), data);
@@ -164,14 +183,16 @@ const MeetForm = (props) => {
               history.push("/");
             })
             .catch((err) => {
+              setOpen(true);
               setButtonClassName("ui primary button");
+
               console.log(err);
             });
         }}
       >
-        {({ values, setFieldValue, handleChange, setFieldTouched }) => (
-          <Form className="ui form">
-            <div className="field">
+        {({ values, setFieldValue, handleChange, handleBlur, errors }) => (
+          <Form className="ui form error">
+            <div className="required field">
               <label>Program</label>
               <Select
                 autoFocus
@@ -186,7 +207,7 @@ const MeetForm = (props) => {
                 isDisabled={disabled}
               />
             </div>
-            <div className="field">
+            <div className="required field">
               <label>Batch</label>
               <Select
                 name="batch"
@@ -200,19 +221,37 @@ const MeetForm = (props) => {
                 isDisabled={disabled}
               />
             </div>
-            <div className="field">
+            <div className="required field">
               <label>Meeting Name</label>
-              <Field
+              <TextField
                 name="meeting_name"
                 type="text"
                 disabled={disabled}
-              ></Field>
+                error={!!errors.meeting_name}
+                helperText={errors.meeting_name}
+                fullWidth
+                value={values.meeting_name}
+                onChange={handleChange}
+                onBlur={handleBlur}
+              ></TextField>
             </div>
-            <div className="field">
+
+            <div className="required field">
               <label>Summary</label>
-              <Field name="summary" type="text" disabled={disabled}></Field>
+              <TextField
+                name="summary"
+                type="text"
+                error={!!errors.summary}
+                helperText={errors.summary}
+                disabled={disabled}
+                fullWidth
+                value={values.summary}
+                onChange={handleChange}
+                onBlur={handleBlur}
+              ></TextField>
             </div>
-            <div className="field">
+
+            <div className="required field">
               <label>Start Time</label>
               <DatePicker
                 selected={values.start_date}
@@ -227,7 +266,7 @@ const MeetForm = (props) => {
                 value={values.start_date}
               />
             </div>
-            <div className="field">
+            <div className="required field">
               <label>End Time</label>
               <DatePicker
                 selected={values.end_date}
@@ -242,7 +281,7 @@ const MeetForm = (props) => {
                 value={values.end_date}
               />
             </div>
-            <div className="field">
+            <div className="required field">
               <label>Attendees</label>
               <Select
                 isMulti
@@ -272,6 +311,11 @@ const MeetForm = (props) => {
           </Form>
         )}
       </Formik>
+      <Snackbar open={open} autoHideDuration={3000} onClose={handleClose}>
+        <Alert severity="error">
+          Some thing happened! Please check the form and retry
+        </Alert>
+      </Snackbar>
     </div>
   );
 };
