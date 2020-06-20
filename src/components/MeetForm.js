@@ -139,8 +139,8 @@ const MeetForm = (props) => {
   };
 
   const validationSchema = yup.object({
-    meeting_name: yup.string().required().max(20),
-    summary: yup.string().required().max(20),
+    meeting_name: yup.string().required().max(30),
+    summary: yup.string().required().max(30),
   });
 
   return (
@@ -257,7 +257,7 @@ const MeetForm = (props) => {
                 selected={values.start_date}
                 showTimeSelect
                 timeFormat="HH:mm"
-                timeIntervals={60}
+                timeIntervals={30}
                 timeCaption="time"
                 dateFormat="yyyy-MM-dd, HH:mm"
                 onChange={(date) => {
@@ -272,7 +272,7 @@ const MeetForm = (props) => {
                 selected={values.end_date}
                 showTimeSelect
                 timeFormat="HH:mm"
-                timeIntervals={60}
+                timeIntervals={30}
                 timeCaption="time"
                 dateFormat="yyyy-MM-dd, HH:mm"
                 onChange={(date) => {
