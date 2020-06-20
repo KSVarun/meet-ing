@@ -26,7 +26,7 @@ const Events = () => {
     debugger;
     if (
       JSON.parse(localStorage.getItem("events")) &&
-      JSON.parse(localStorage.getItem("events")).length > 1
+      JSON.parse(localStorage.getItem("events")).length > 0
     ) {
       var events = JSON.parse(localStorage.getItem("events"));
       return (
