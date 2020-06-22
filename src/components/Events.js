@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import moment from "moment";
-
+import { Modal } from "antd";
 import { deleteEvent } from "../api/Schedule";
+
+import "antd/dist/antd.css";
 
 const Events = () => {
   const [key, setKey] = useState("");
-  const [parentLoadDiv, setParentLoadDiv] = useState("");
-  const [childLoadDiv, setChildLoadDiv] = useState("");
-  const [deleteText, setDeleteText] = useState("");
+  const [open, setOpen] = useState(false);
+  const [eventId, setEventId] = useState("");
+  const [eventName, setEventName] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     handleRender();
@@ -23,7 +26,6 @@ const Events = () => {
   };
 
   const handleRender = () => {
-    debugger;
     if (
       JSON.parse(localStorage.getItem("events")) &&
       JSON.parse(localStorage.getItem("events")).length > 0
@@ -31,6 +33,30 @@ const Events = () => {
       var events = JSON.parse(localStorage.getItem("events"));
       return (
         <div>
+          <Modal
+            title="Delete confirmation"
+            visible={open}
+            okText="Delete"
+            onOk={() => {
+              setLoading(true);
+              deleteEvent(eventId).then((response) => {
+                setLoading(false);
+                setOpen(false);
+                handleDelete(eventId);
+              });
+            }}
+            onCancel={() => {
+              setOpen(false);
+            }}
+            confirmLoading={loading}
+            cancelButtonProps={{ disabled: loading }}
+          >
+            <p>
+              Are you sure you want to delete the event:{" "}
+              <strong>{eventName}</strong>
+            </p>
+          </Modal>
+
           <div
             style={{
               display: "flex",
@@ -44,9 +70,7 @@ const Events = () => {
           </div>
 
           <h4 className="ui horizontal divider header">EVENTS</h4>
-          <div className={parentLoadDiv}>
-            <div className={childLoadDiv}>{deleteText}</div>
-          </div>
+
           <div className="ui cards">
             {events.map((e) => {
               return (
@@ -59,15 +83,9 @@ const Events = () => {
                       className="right floated trash icon"
                       style={{ color: "red", cursor: "pointer" }}
                       onClick={() => {
-                        setParentLoadDiv("ui active inverted dimmer");
-                        setChildLoadDiv("ui text loader");
-                        setDeleteText("Deleting");
-                        deleteEvent(e.eventId).then((response) => {
-                          setParentLoadDiv("");
-                          setChildLoadDiv("");
-                          setDeleteText("");
-                          handleDelete(e.eventId);
-                        });
+                        setOpen(true);
+                        setEventId(e.eventId);
+                        setEventName(e.summary);
                       }}
                     ></i>
                     <div className="header">{e.summary}</div>

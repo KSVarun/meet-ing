@@ -106,12 +106,12 @@ const MeetForm = (props) => {
         " - ",
         String(data.batch.value),
         " - ",
-        String(data.summary)
+        String(data.meeting_name)
       );
 
       schedule = {
         summary: updatedSummary,
-        description: data.meeting_name,
+        description: data.summary,
         startDateTime: moment(data.start_date).format(),
         endDateTime: moment(data.end_date).format(),
         attendees: data.attendees.map((a) => a.value),
@@ -124,8 +124,10 @@ const MeetForm = (props) => {
         description: props.location.state.description,
         startDateTime: moment(data.start_date).format(),
         endDateTime: moment(data.end_date).format(),
-        attendees: props.location.state.attendees,
+        attendees: data.attendees.map((a) => a.value),
       };
+      // console.log(schedule);
+
       return await updateEvent(props.location.state.eventId, schedule);
     }
   };
@@ -139,8 +141,8 @@ const MeetForm = (props) => {
   };
 
   const validationSchema = yup.object({
-    meeting_name: yup.string().required().max(30),
-    summary: yup.string().required().max(30),
+    meeting_name: yup.string().required("Meeting name is required").max(30),
+    summary: yup.string().required("Summary is required").max(30),
   });
 
   return (
@@ -175,7 +177,7 @@ const MeetForm = (props) => {
         }}
         validationSchema={validationSchema}
         onSubmit={(data) => {
-          console.log(data);
+          // console.log(data);
           handleSubmit(data)
             .then((reseponse) => {
               handleLS(reseponse, uuid(), data);
