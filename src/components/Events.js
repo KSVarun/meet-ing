@@ -6,26 +6,38 @@ import { deleteEvent } from "../api/Schedule";
 
 import "antd/dist/antd.css";
 
-const Events = () => {
+import SnackNotification from "./SnackNotification";
+
+const Events = (props) => {
   const [key, setKey] = useState("");
-  const [open, setOpen] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
   const [eventId, setEventId] = useState("");
   const [eventName, setEventName] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const [snackOpen, setSnackOpen] = useState(false);
 
   useEffect(() => {
     handleRender();
   }, [key]);
 
-  const handleDelete = (eventId) => {
+  function handleClose(event, reason) {
+    if (reason === "clickaway") {
+      return;
+    }
+    setSnackOpen(false);
+  }
+
+  function handleDelete(eventId) {
     var events = JSON.parse(localStorage.getItem("events"));
     localStorage.clear();
     var updatedEvents = events.filter((event) => event.eventId !== eventId);
     localStorage.setItem("events", JSON.stringify(updatedEvents));
     setKey(eventId);
-  };
+  }
 
   const handleRender = () => {
+    console.log(snackOpen);
     if (
       JSON.parse(localStorage.getItem("events")) &&
       JSON.parse(localStorage.getItem("events")).length > 0
@@ -35,18 +47,19 @@ const Events = () => {
         <div>
           <Modal
             title="Delete confirmation"
-            visible={open}
+            visible={openModal}
             okText="Delete"
             onOk={() => {
               setLoading(true);
               deleteEvent(eventId).then((response) => {
                 setLoading(false);
-                setOpen(false);
                 handleDelete(eventId);
+                setSnackOpen(true);
+                setOpenModal(false);
               });
             }}
             onCancel={() => {
-              setOpen(false);
+              setOpenModal(false);
             }}
             confirmLoading={loading}
             cancelButtonProps={{ disabled: loading }}
@@ -83,13 +96,15 @@ const Events = () => {
                       className="right floated trash icon"
                       style={{ color: "red", cursor: "pointer" }}
                       onClick={() => {
-                        setOpen(true);
+                        setOpenModal(true);
                         setEventId(e.eventId);
                         setEventName(e.summary);
                       }}
                     ></i>
                     <div className="header">{e.summary}</div>
-                    <div className="description">{e.description}</div>
+                    <div className="description">
+                      <h6>{e.description}</h6>
+                    </div>
                     <div className="description">
                       {moment(e.startDateObj).format("MMMM Do YYYY, h:mm A")}
                     </div>
@@ -109,6 +124,12 @@ const Events = () => {
               );
             })}
           </div>
+          <SnackNotification
+            open={snackOpen}
+            handleClose={handleClose}
+            message="Delete successful"
+            severiaty="success"
+          />
         </div>
       );
     } else {

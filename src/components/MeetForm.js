@@ -6,12 +6,12 @@ import uuid from "uuid/v4";
 import { Link, useHistory } from "react-router-dom";
 import Select from "react-select";
 import * as yup from "yup";
-import { TextField, Snackbar } from "@material-ui/core";
-import { Alert } from "@material-ui/lab";
+import { TextField } from "@material-ui/core";
 
 import "react-datepicker/dist/react-datepicker.css";
 
 import { addEvent, updateEvent } from "../api/Schedule";
+import SnackNotification from "./SnackNotification";
 
 const MeetForm = (props) => {
   var schedule = {};
@@ -54,9 +54,7 @@ const MeetForm = (props) => {
     }
   }, [props.location.state]);
 
-  const handleLS = (reseponse, key, data) => {
-    setButtonClassName("ui primary button");
-
+  function handleLS(reseponse, key, data) {
     if (update.length === 0) {
       var existing = localStorage.getItem("events");
       existing = existing ? JSON.parse(existing) : [];
@@ -96,9 +94,9 @@ const MeetForm = (props) => {
       });
       localStorage.setItem("events", JSON.stringify(updatedEvents));
     }
-  };
+  }
 
-  const handleSubmit = async (data) => {
+  async function handleSubmit(data) {
     setButtonClassName("ui primary loading button");
 
     if (update.length === 0) {
@@ -130,15 +128,15 @@ const MeetForm = (props) => {
 
       return await updateEvent(props.location.state.eventId, schedule);
     }
-  };
+  }
 
-  const handleClose = (event, reason) => {
+  function handleClose(event, reason) {
     if (reason === "clickaway") {
       return;
     }
 
     setOpen(false);
-  };
+  }
 
   const validationSchema = yup.object({
     meeting_name: yup.string().required("Meeting name is required").max(30),
@@ -180,10 +178,11 @@ const MeetForm = (props) => {
           // console.log(data);
           handleSubmit(data)
             .then((reseponse) => {
+              setButtonClassName("ui primary button");
               handleLS(reseponse, uuid(), data);
             })
             .then(() => {
-              history.push("/");
+              history.push({ pathname: "/", state: true });
             })
             .catch((err) => {
               setOpen(true);
@@ -314,12 +313,12 @@ const MeetForm = (props) => {
           </Form>
         )}
       </Formik>
-
-      <Snackbar open={open} autoHideDuration={3000} onClose={handleClose}>
-        <Alert severity="error">
-          Some thing happened! Please check the form and retry
-        </Alert>
-      </Snackbar>
+      <SnackNotification
+        open={open}
+        handleClose={handleClose}
+        message="Some thing happened! Please check the form and retry"
+        severity="error"
+      />
     </div>
   );
 };
