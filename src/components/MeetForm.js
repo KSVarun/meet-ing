@@ -20,9 +20,9 @@ const MeetForm = (props) => {
 
   const [buttonClassName, setButtonClassName] = useState("ui primary button");
   const [update, setUpdate] = useState("");
-  const [disabled, setDisabled] = useState(false);
+  const [disabled, setDisabled] = useState(false); //disabling program, batch, meeting name, summary and attendees
   const [buttonMsg, setButtonMsg] = useState("SCHEDULE");
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false); //opeaning snack bar
 
   const attendees = [
     { label: "Alex", value: "alex@gmail.com" },
@@ -182,7 +182,7 @@ const MeetForm = (props) => {
               handleLS(reseponse, uuid(), data);
             })
             .then(() => {
-              history.push({ pathname: "/", state: true });
+              history.push("/");
             })
             .catch((err) => {
               setOpen(true);

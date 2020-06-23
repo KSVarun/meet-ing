@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import moment from "moment";
-import { Modal } from "antd";
-import { deleteEvent } from "../api/Schedule";
 
 import "antd/dist/antd.css";
 
 import SnackNotification from "./SnackNotification";
+import CustomModal from "./CustomModal";
 
 const Events = (props) => {
   const [key, setKey] = useState("");
@@ -14,8 +13,8 @@ const Events = (props) => {
   const [eventId, setEventId] = useState("");
   const [eventName, setEventName] = useState("");
   const [loading, setLoading] = useState(false);
-
   const [snackOpen, setSnackOpen] = useState(false);
+  // const [snackCreateOpen, setSnackCreateOpen] = useState(false);
 
   useEffect(() => {
     handleRender();
@@ -28,6 +27,13 @@ const Events = (props) => {
     setSnackOpen(false);
   }
 
+  // function handleSnackCreateClose(event, reason) {
+  //   if (reason === "clickaway") {
+  //     return;
+  //   }
+  //   setSnackCreateOpen(false);
+  // }
+
   function handleDelete(eventId) {
     var events = JSON.parse(localStorage.getItem("events"));
     localStorage.clear();
@@ -37,7 +43,6 @@ const Events = (props) => {
   }
 
   const handleRender = () => {
-    console.log(snackOpen);
     if (
       JSON.parse(localStorage.getItem("events")) &&
       JSON.parse(localStorage.getItem("events")).length > 0
@@ -45,31 +50,16 @@ const Events = (props) => {
       var events = JSON.parse(localStorage.getItem("events"));
       return (
         <div>
-          <Modal
-            title="Delete confirmation"
-            visible={openModal}
-            okText="Delete"
-            onOk={() => {
-              setLoading(true);
-              deleteEvent(eventId).then((response) => {
-                setLoading(false);
-                handleDelete(eventId);
-                setSnackOpen(true);
-                setOpenModal(false);
-              });
-            }}
-            onCancel={() => {
-              setOpenModal(false);
-            }}
-            confirmLoading={loading}
-            cancelButtonProps={{ disabled: loading }}
-          >
-            <p>
-              Are you sure you want to delete the event:{" "}
-              <strong>{eventName}</strong>
-            </p>
-          </Modal>
-
+          <CustomModal
+            openModal={openModal}
+            setLoading={setLoading}
+            handleDelete={handleDelete}
+            setSnackOpen={setSnackOpen}
+            setOpenModal={setOpenModal}
+            loading={loading}
+            eventName={eventName}
+            eventId={eventId}
+          />
           <div
             style={{
               display: "flex",
@@ -130,6 +120,12 @@ const Events = (props) => {
             message="Delete successful"
             severiaty="success"
           />
+          {/* <SnackNotification
+            open={snackCreateOpen}
+            handleClose={handleSnackCreateClose}
+            message="Event created"
+            severiaty="success"
+          /> */}
         </div>
       );
     } else {
