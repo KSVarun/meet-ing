@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Formik, Form } from "formik";
+import { Formik, Form, FieldArray } from "formik";
 import DatePicker from "react-datepicker";
 import moment from "moment";
 import uuid from "uuid/v4";
@@ -107,12 +107,15 @@ const MeetForm = (props) => {
         String(data.meeting_name)
       );
 
+      var attendees = data.attendees.map((a) => a.value);
+      attendees = attendees.concat(data.moreAttendees.map((ma) => ma.email));
+
       schedule = {
         summary: updatedSummary,
         description: data.summary,
         startDateTime: moment(data.start_date).format(),
         endDateTime: moment(data.end_date).format(),
-        attendees: data.attendees.map((a) => a.value),
+        attendees: attendees,
       };
 
       return await addEvent(schedule);
@@ -124,7 +127,6 @@ const MeetForm = (props) => {
         endDateTime: moment(data.end_date).format(),
         attendees: data.attendees.map((a) => a.value),
       };
-      // console.log(schedule);
 
       return await updateEvent(props.location.state.eventId, schedule);
     }
@@ -172,10 +174,10 @@ const MeetForm = (props) => {
             update.length > 0 ? new Date(props.location.state.endDateObj) : "",
           attendees: update.length > 0 ? props.location.state.attendees : "",
           summary: update.length > 0 ? props.location.state.description : "",
+          moreAttendees: [],
         }}
         validationSchema={validationSchema}
         onSubmit={(data) => {
-          // console.log(data);
           handleSubmit(data)
             .then((reseponse) => {
               setButtonClassName("ui primary button");
@@ -299,6 +301,52 @@ const MeetForm = (props) => {
                 isDisabled={disabled}
               />
             </div>
+            <div className="field">
+              <label>Add More</label>
+              <FieldArray name="moreAttendees">
+                {({ push, remove }) => (
+                  <div>
+                    {values.moreAttendees.map((a, index) => {
+                      return (
+                        <div key={a.email}>
+                          <TextField
+                            name={`moreAttendees[${index}].email`}
+                            type="text"
+                            disabled={disabled}
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            value={a.email}
+                          ></TextField>
+
+                          <button
+                            style={{ marginLeft: "5px" }}
+                            className="ui button"
+                            type="button"
+                            onClick={() => remove(index)}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      );
+                    })}
+
+                    <div>
+                      <button
+                        style={{ marginTop: "5px" }}
+                        className="ui button"
+                        type="button"
+                        onClick={() => {
+                          push({ email: "" });
+                        }}
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </FieldArray>
+            </div>
+
             <div
               style={{
                 display: "flex",
