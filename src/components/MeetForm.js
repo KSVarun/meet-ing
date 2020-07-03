@@ -58,6 +58,11 @@ const MeetForm = (props) => {
     if (update.length === 0) {
       var existing = localStorage.getItem("events");
       existing = existing ? JSON.parse(existing) : [];
+      var attendees = data.attendees;
+
+      data.moreAttendees.map((a) =>
+        attendees.push({ label: a.email, value: a.email })
+      );
 
       // Add new data to localStorage Array
       existing.push({
@@ -66,7 +71,7 @@ const MeetForm = (props) => {
         batch: data.batch,
         summary: schedule.summary,
         description: schedule.description,
-        attendees: data.attendees,
+        attendees: attendees,
         eventId: reseponse.data.eventId,
         startDateObj: data.start_date,
         endDateObj: data.end_date,
@@ -125,7 +130,7 @@ const MeetForm = (props) => {
         description: props.location.state.description,
         startDateTime: moment(data.start_date).format(),
         endDateTime: moment(data.end_date).format(),
-        attendees: data.attendees.map((a) => a.value),
+        attendees: props.location.state.attendees,
       };
 
       return await updateEvent(props.location.state.eventId, schedule);
@@ -301,51 +306,55 @@ const MeetForm = (props) => {
                 isDisabled={disabled}
               />
             </div>
-            <div className="field">
-              <label>Add More</label>
-              <FieldArray name="moreAttendees">
-                {({ push, remove }) => (
-                  <div>
-                    {values.moreAttendees.map((a, index) => {
-                      return (
-                        <div key={a.email}>
-                          <TextField
-                            name={`moreAttendees[${index}].email`}
-                            type="text"
-                            disabled={disabled}
-                            onBlur={handleBlur}
-                            onChange={handleChange}
-                            value={a.email}
-                          ></TextField>
-
-                          <button
-                            style={{ marginLeft: "5px" }}
-                            className="ui button"
-                            type="button"
-                            onClick={() => remove(index)}
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      );
-                    })}
-
+            {update.length < 1 ? (
+              <div className="field">
+                <label>Add More</label>
+                <FieldArray name="moreAttendees">
+                  {({ push, remove }) => (
                     <div>
-                      <button
-                        style={{ marginTop: "5px" }}
-                        className="ui button"
-                        type="button"
-                        onClick={() => {
-                          push({ email: "" });
-                        }}
-                      >
-                        Add
-                      </button>
+                      {values.moreAttendees.map((a, index) => {
+                        return (
+                          <div key={a.email}>
+                            <TextField
+                              name={`moreAttendees[${index}].email`}
+                              type="text"
+                              disabled={disabled}
+                              onBlur={handleBlur}
+                              onChange={handleChange}
+                              value={a.email}
+                            ></TextField>
+
+                            <button
+                              style={{ marginLeft: "5px" }}
+                              className="ui button"
+                              type="button"
+                              onClick={() => remove(index)}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        );
+                      })}
+
+                      <div>
+                        <button
+                          style={{ marginTop: "5px" }}
+                          className="ui button"
+                          type="button"
+                          onClick={() => {
+                            push({ email: "" });
+                          }}
+                        >
+                          Add
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </FieldArray>
-            </div>
+                  )}
+                </FieldArray>
+              </div>
+            ) : (
+              ""
+            )}
 
             <div
               style={{

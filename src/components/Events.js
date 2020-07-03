@@ -153,6 +153,12 @@ const Events = (props) => {
           >
             NO EVENTS
           </div>
+          <SnackNotification
+            open={snackOpen}
+            handleClose={handleClose}
+            message="Delete successful"
+            severiaty="success"
+          />
         </div>
       );
     }
